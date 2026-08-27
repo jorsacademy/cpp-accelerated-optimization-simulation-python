@@ -117,7 +117,49 @@ g++ -O3 -std=c++17 cpp/core_smoke.cpp -o core_smoke
 
 ## Performance reporting discipline
 
-No speedup is hard-coded into the tests or README before it is measured. CI requires numerical equivalence, not a minimum acceleration factor. Hosted-runner timing is hardware- and workload-specific and will be reported only after the GitHub Actions build executes the compiled extension.
+No speedup is hard-coded into the tests or README before it is measured. CI requires numerical equivalence, not a minimum acceleration factor. Hosted-runner timing is hardware- and workload-specific.
+
+## Validated GitHub Actions run
+
+The complete workflow was executed on GitHub Actions with CPython 3.12.14. The package built successfully through scikit-build-core/CMake with pybind11 3.1.0, the standalone C++17 core oracle passed, the compiled extension imported successfully, and all eight regression tests passed, including Python-versus-C++ trajectory-vector equivalence.
+
+The compiled optimization smoke test used 300 selection scenarios, 700 independent validation scenarios, 120 days, 12 assets, and seed 42. The finite 27-policy search selected:
+
+```text
+maintenance threshold state   2 (Critical)
+staffed crew slots/day        1
+standby spare units           1
+```
+
+Validation metrics under the declared synthetic model were:
+
+```text
+selected policy
+  mean cost                   33,929.77
+  CVaR95                      43,054.29
+  mean lost unit-days             1.045
+  mean failures                   0.007
+  mean maintenance events         4.447
+
+repair-only baseline
+  mean cost                  133,389.94
+  CVaR95                     237,010.29
+  mean lost unit-days            44.924
+  mean failures                   3.596
+```
+
+These values are model outputs under the stated synthetic reliability assumptions, not plant savings or field reliability claims.
+
+The GitHub-runner benchmark used the same random tensors for both implementations with 600 scenarios, 160 days, 14 assets, policy `(threshold=2, crew=2, spares=1)`, and one timing repeat:
+
+```text
+scalar Python       0.431929 s    1.00x
+C++17 + pybind11    0.005692 s   75.89x
+
+mean scenario cost from both kernels: 71,331.883
+```
+
+The complete scenario-level output vectors passed numerical-equivalence checks before timing. The `75.89x` figure is therefore a measured wall-clock result for this hosted runner and workload, not a portable acceleration guarantee.
 
 ## Modeling scope
 
